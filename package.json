@@ -1,0 +1,15 @@
+{
+  "name": "start_nexcloud",
+  "version": "1.0.0",
+  "description": "Init docker-compose file tu use network wit name described by environment file",
+  "main": "init.js",
+  "author": "Olivier Heimerdinger",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "init_env": "node init.js"
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0"
+  }
+}

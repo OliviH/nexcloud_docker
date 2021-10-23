@@ -1,0 +1,71 @@
+version: "3.8"
+services:
+  nextcloud-db:
+    image: mariadb:latest
+    container_name: ${MYSQL_HOST}
+    hostname: ${MYSQL_HOST}
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-read-only-compressed=OFF
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./nextcloud-data-db:/var/lib/mysql
+    networks:
+      - {{NETWORK}}
+
+  nextcloud-redis:
+    image: redis:latest
+    container_name: ${REDIS_HOST}
+    env_file: .env
+    hostname: ${REDIS_HOST}
+    restart: unless-stopped
+    networks:
+      - {{NETWORK}}
+
+  nextcloud-app:
+    image: nextcloud:fpm
+    container_name: ${APP_NAME}
+    hostname: ${APP_NAME}
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - nextcloud-db
+      - nextcloud-redis
+    volumes:
+      - ./nextcloud-data/:/var/www/html
+    networks:
+      - {{NETWORK}}
+
+  nextcloud-web:
+    image: nginx:latest
+    container_name: ${WEB_NAME}
+    hostname: ${WEB_NAME}
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - nextcloud-app
+    volumes:
+      - ./nextcloud-data/:/var/www/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - ${PORT}:80
+    networks:
+      - {{NETWORK}}
+
+  nextcloud-cron:
+    image: nextcloud:fpm
+    container_name: ${CRON_NAME}
+    hostname: ${CRON_NAME}
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./nextcloud-data/:/var/www/html
+    entrypoint: /cron.sh
+    depends_on:
+      - nextcloud-db
+      - nextcloud-redis
+    networks:
+      - {{NETWORK}}
+
+networks:
+  {{NETWORK}}:
+    driver: bridge
